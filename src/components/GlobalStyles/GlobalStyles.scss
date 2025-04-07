@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+    --w-container: 1200px;
+    --color-container:rgb(15, 23, 42);
     
 }
 html {
@@ -13,5 +15,8 @@ body {
     font-size: 1.6rem;
     line-height: 1.6;
     color: #333;
+    max-width: var(--w-container);
+    background-color: var(--color-container);
+    margin: 0px auto;
 }
 
