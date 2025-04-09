@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUserCircle } from "react-icons/fa";
-import '~/components/Header/Header.scss';
+import { IoMdArrowDropdown } from "react-icons/io";
 import { MdOutlineLanguage } from "react-icons/md";
+import '~/components/Header/Header.scss';
 import logo from "~/assets/img/logo.jpg"; // Thay bằng logo thực tế
 import { movieData } from "~/data/Movie"; // Import dữ liệu mẫu
 import Login from "~/components/Login/Login"; // Import component Login
@@ -13,7 +14,17 @@ const Header = () => {
   const [dateList, setDateList] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [timeList, setTimeList] = useState([]);
-  const [isLoginOpen, setIsLoginOpen] = useState(false); // State mới để kiểm soát hiển thị Login modal
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Kiểm tra người dùng đã đăng nhập khi tải trang
+  useEffect(() => {
+    const user = localStorage.getItem("currentUser");
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
 
   // Khi chọn rạp -> cập nhật danh sách phim
   const handleTheaterChange = (e) => {
@@ -65,6 +76,23 @@ const Header = () => {
     setIsLoginOpen(false);
   };
 
+  // Xử lý khi đăng nhập thành công
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+  };
+
+  // Xử lý đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem("currentUser");
+    setCurrentUser(null);
+    setShowUserMenu(false);
+  };
+
+  // Hiển thị/ẩn menu người dùng
+  const toggleUserMenu = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
   return (
     <>
       <header className="text-white w-full mt-6 mb-6">
@@ -85,8 +113,49 @@ const Header = () => {
 
           {/* Đăng nhập & Ngôn ngữ */}
           <div className="flex items-center gap-4">
-            <FaUserCircle size={24} />
-            <button className="font-medium" onClick={openLoginModal}>Đăng nhập</button>
+            {currentUser ? (
+              // Hiển thị thông tin người dùng đã đăng nhập
+              <div className="relative">
+                <button 
+                  className="flex items-center gap-2 font-medium" 
+                  onClick={toggleUserMenu}
+                >
+                  <FaUserCircle size={24} />
+                  <span>{currentUser.fullName || currentUser.username}</span>
+                  <IoMdArrowDropdown size={20} />
+                </button>
+                
+                {/* Menu dropdown khi đã đăng nhập */}
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                    <div className="py-1">
+                      <button
+                        className="block w-full text-left px-4 py-2 text-xl text-gray-700 hover:bg-gray-100"
+                      >
+                        Thông tin tài khoản
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-xl text-gray-700 hover:bg-gray-100"
+                      >
+                        Lịch sử đặt vé
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-xl text-red-600 hover:bg-gray-100"
+                      >
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Hiển thị nút đăng nhập nếu chưa đăng nhập
+              <>
+                <FaUserCircle size={24} />
+                <button className="font-medium" onClick={openLoginModal}>Đăng nhập</button>
+              </>
+            )}
             <MdOutlineLanguage size={24} />
             <span className="font-medium">VN</span>
           </div>
@@ -162,7 +231,11 @@ const Header = () => {
       </header>
 
       {/* Login Modal */}
-      <Login isOpen={isLoginOpen} onClose={closeLoginModal} />
+      <Login 
+        isOpen={isLoginOpen} 
+        onClose={closeLoginModal} 
+        onLoginSuccess={handleLoginSuccess}
+      />
     </>
   );
 };
